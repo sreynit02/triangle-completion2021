@@ -61,7 +61,6 @@ crashlytics-build.properties
 .DS_Store
 Icon?
 .vscode
-*.mp4
 *.txt
 *.mp4.meta
 *.txt.meta
