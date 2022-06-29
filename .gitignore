@@ -63,3 +63,5 @@ Icon?
 .vscode
 *.mp4
 *.txt
+*.mp4.meta
+*.txt.meta
