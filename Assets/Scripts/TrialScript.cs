@@ -179,7 +179,7 @@ public class TrialScript : MonoBehaviour {
     // Trigger checks
     public IEnumerator axisChecker()
     {
-        while(Input.GetAxis("Trigger") == 0)
+        while(Input.GetAxis("Trigger") == 0 || Input.GetMouseButtonDown(1) ) // Haley add 
         {
             yield return null;
         }
@@ -187,7 +187,7 @@ public class TrialScript : MonoBehaviour {
 
     public IEnumerator waitForTrigger()
     {
-        while(Input.GetAxis("Trigger") != 0)
+        while(Input.GetAxis("Trigger") != 0)  
         {
             yield return null;
         }
