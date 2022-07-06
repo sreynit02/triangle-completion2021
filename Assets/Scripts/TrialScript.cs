@@ -96,6 +96,9 @@ public class TrialScript : MonoBehaviour {
     public int seventyFiveStart = 5;
     public int ninetyStart = 6;
     public int[] countStartArr;
+
+    // Input control
+    bool isButtonDown = false; 
          
     // Rotate landmarks in conflict condition
     public void rotateLandmarks()
@@ -165,33 +168,65 @@ public class TrialScript : MonoBehaviour {
             File.AppendAllText(path, dateAndTime);
             File.AppendAllText(path, condition);
         }
-		if (trialCount != 0)
+        if (trialCount != 0)
         {
             File.AppendAllText(path, "Trial " + (trialCount - 4) + ", Trial Type: " + trialType + "\n");
-			File.AppendAllText(path, "Second Post Location" + outBoundPostLoc + "\n");
+            File.AppendAllText(path, "Second Post Location" + outBoundPostLoc + "\n");
             File.AppendAllText(path, "Home Location: " + homePostLoc + "\n");
             File.AppendAllText(path, "Response Location: " + playerPos + "\n");
-			File.AppendAllText(path, "Heading Angle: " + GameObject.Find("Heading Tracker").GetComponent<HeadingAngleTracker>().headingAngleError + "\n");
+            File.AppendAllText(path, "Heading Angle: " + GameObject.Find("Heading Tracker").GetComponent<HeadingAngleTracker>().headingAngleError + "\n");
             File.AppendAllText(path, "Response Time: " + responseTime + "\n\n");
         }
     }
-
-    // Trigger checks
+    /// 
+    //////////////////////////////////////////////////////////////
+    /// ORIGINAL FUNCTIONS FROM PHIL... Trigger Checks do not work... 
+    //////////////////////////////////////////////////////////////
+    /// 
+    /*
     public IEnumerator axisChecker()
     {
-        while(Input.GetAxis("Trigger") == 0 || Input.GetMouseButtonDown(1) ) // Haley add 
+        while (Input.GetAxis("Trigger") == 0)
         {
             yield return null;
         }
     }
-
+    
     public IEnumerator waitForTrigger()
     {
-        while(Input.GetAxis("Trigger") != 0)  
+        while (Input.GetAxis("Trigger") != 0)
         {
             yield return null;
         }
+    }*/
+
+    //////////////////////////////////////////////////////////////
+    ///  Haley Input Fix        
+    ///  This blog has a good explanation for coroutines https://gamedevbeginner.com/coroutines-in-unity-when-and-how-to-use-them/#how_to_pause_a_coroutine
+    ///  Coroutines  - Can execute over multiple frames. In contrast, Update() is called once every frame.
+    ///              - They allow you to add delays, pauses, etc. They can also force f(x)s to happen in a specific exection order
+    ///  IEnumerator - The return type for a Coroutine (e.g., "yield return" or "yield break" are IEnumerator types 
+    ///              - "yield return" is executed at the end of a coroutine
+    ///              - "yield break" ends a coroutine before it's finished (e.g., for conditional statemens .. if ... yield break)
+
+    ///  yield - pause code within coroutine. Allows to return at point where function is interrupted
+    ///  return - terminates execution at that point and passess control back to calling method
+    ///  "yield return XX" - the last argument dictates how long the tield will last
+    ///              - "yield return null" - says wait until the next frame before continuing
+    ///              - "yield return WaitForSeconds(5)" - says wait for 5 seconds 
+    public IEnumerator waitForTrigger()
+    {
+        // While the right mouse button is NOT pressed... remain in this loop 
+        while (Input.GetMouseButtonDown(1) == false) 
+          yield return null;
+
+        // The mouse right button was pressed. The While loop has ended. Continue to next function in startExp()
+        Debug.Log("key press");
+        yield return null; 
+
     }
+
+    //////////////////////////////////////////////////////////////
 
     // Post checks
     public IEnumerator arriveAtHomePost()
@@ -438,11 +473,11 @@ public class TrialScript : MonoBehaviour {
     public IEnumerator videoCaptures()
     {
         trialCount = 0;
-        yield return StartCoroutine(axisChecker());
+        //yield return StartCoroutine(axisChecker());
         yield return StartCoroutine(waitForTrigger());
         resetPost.SetActive(true);
         resetPostWhite.SetActive(true);
-        yield return StartCoroutine(axisChecker());
+        //yield return StartCoroutine(axisChecker());
         yield return StartCoroutine(waitForTrigger());
         for (int i = 0; i < homeArray.Length; i++)
         {
@@ -504,7 +539,7 @@ public class TrialScript : MonoBehaviour {
                 outBoundPost.transform.position = outBoundPostFINLoc;
                 outBoundPost.SetActive(true);
                 yield return StartCoroutine(arriveAtOutPost());
-                yield return StartCoroutine(axisChecker());
+                //yield return StartCoroutine(axisChecker());
                 yield return StartCoroutine(waitForTrigger());
                 tree.SetActive(false);
                 tower.SetActive(false);
@@ -514,7 +549,7 @@ public class TrialScript : MonoBehaviour {
                     resetPost.SetActive(true);
                     resetPostWhite.SetActive(true);
                 }
-                yield return StartCoroutine(axisChecker());
+                //yield return StartCoroutine(axisChecker());
                 yield return StartCoroutine(waitForTrigger());
                 if (trialCount == 16)
                 {
@@ -524,18 +559,36 @@ public class TrialScript : MonoBehaviour {
         }
     }
 
-    // Main experiment code
+
+    //////////////////////////////////////////////////////////////
+    /// 
+    /// Phil: Main experiment code
+    /// Haley: I have removed axisChecker() 
+    /// 
+    /// startExp() is actually the ENTIRE experiment
+    /// The experiment is executed as one giant coroutine
+    /// sub-coroutines are used to make pauses, delays, and to check for inputs
+    /// 
+    //////////////////////////////////////////////////////////////
     public IEnumerator startExp()
     {
         // Print initial data and have participant press button to start exp
         CreateText();
-		yield return StartCoroutine (axisChecker ());
-		yield return StartCoroutine (waitForTrigger ());
+
+        Debug.Log("Start Experiment");
+        Debug.Log("Await 1st input...");
+        //yield return StartCoroutine (axisChecker ());
+        yield return StartCoroutine (waitForTrigger ());
+
         resetPost.SetActive(true);
         resetPostWhite.SetActive(true);
-		yield return StartCoroutine(axisChecker());
-		yield return StartCoroutine(waitForTrigger());
 
+        Debug.Log("Blue and white post appear.. Await 2nd input..");
+        //yield return StartCoroutine(axisChecker());
+        yield return StartCoroutine(waitForTrigger());
+
+
+        Debug.Log("First trial has begun");
         // loop through blocks
         {
             for (int i = 0; i < nBlocks; i++)
@@ -581,7 +634,16 @@ public class TrialScript : MonoBehaviour {
                     resetPostWhite.SetActive(false);
                     trialCount = trialCount + 1;
 
-                    // Trial code by trial type
+                    //////////////////////////////////////////////////////////////////////////////////////////////////////
+                    // Experiment condition is  coded by "trialType" below... I believe we are only interested in "cue combination" 
+                    // Select option based on experiment
+                    // if (cue combination or landmarks only) 
+                    //      if   (cue combination)
+                    //      else (landmarks only)
+                    // else if (self motion only)
+                    // else if (cue conflict)
+
+
                     // landmarks only and combination conditions here
                     if (trialArray[k] == landOnly || trialArray[k] == combCue)
                     {
@@ -650,14 +712,21 @@ public class TrialScript : MonoBehaviour {
                         // Start with both present condtions (also works for one present combination)
                         if (bothPresentCondition || !bothPresentCondition && trialType == combCue)
                         {
+                            Debug.Log("Wait until... Walk to home post");
                             homePost.SetActive(true);
                             yield return StartCoroutine(arriveAtHomePost());
+
+                            Debug.Log("Wait until.. Walk to 2nd post");
                             outBoundPost.SetActive(true);
-							outBoundPostLoc = outBoundPost.transform.position;
+                            outBoundPostLoc = outBoundPost.transform.position;                        
                             yield return StartCoroutine(arriveAtOutPost());
+
+                            Debug.Log("Wait until.. Walk to 3rd (final) post");
                             outBoundPost.transform.position = outBoundPostFINLoc;
                             outBoundPost.SetActive(true);
                             yield return StartCoroutine(arriveAtOutPost());
+
+                            Debug.Log("Participant is asked to count backwards ... Press trigger to continue once finished (prompts says to tell experimenter when done counting)");
                             canvasBlack.SetActive(true);        // Participants count backwards here
                             groundPlane.SetActive(false);
                             if (countStartArr[k] == fifteenStart)
@@ -684,8 +753,10 @@ public class TrialScript : MonoBehaviour {
                             {
                                 NinetyStart.SetActive(true);
                             }
-                            yield return StartCoroutine(axisChecker());
+                            //yield return StartCoroutine(axisChecker());
                             yield return StartCoroutine(waitForTrigger());
+
+                            // Hide counting GUIs
                             FifteenStart.SetActive(false);
                             ThirtyStart.SetActive(false);
                             FortyFiveStart.SetActive(false);
@@ -695,23 +766,27 @@ public class TrialScript : MonoBehaviour {
                             canvasBlack.SetActive(false);
                             groundPlane.SetActive(true);
 
+                            Debug.Log("Wait until... participant walks to target post (the first post).");
                             // Begin return path
                             startTime = Time.time;
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
+
+                            Debug.Log("Record data for trial. Hide landmarks.");
                             responseTime = Time.time - startTime;
                             CreateText();
                             tree.SetActive(false);
                             tower.SetActive(false);
                             rock.SetActive(false);
 
+                            Debug.Log("Start next trial OR end experiment if 44 trials are completed.");
                             // begin next trial or end experiment by pressing button if last trial
                             if (trialCount < 44)
                             {
                                 resetPost.SetActive(true);
                                 resetPostWhite.SetActive(true);
                             }
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
                             if (trialCount == 44)
                             {
@@ -724,10 +799,10 @@ public class TrialScript : MonoBehaviour {
                         {
                             canvasBlack.SetActive(true);    // Keep this on in background while video plays
 							groundPlane.SetActive(false);
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
                             StartCoroutine(playVideo());
-                            yield return StartCoroutine(axisChecker());
+                            //yield return StartCoroutine(axisChecker());
                             yield return StartCoroutine(waitForTrigger());
                             canvasVideo.SetActive(false);           // Participants count backwards here
                             if (countStartArr[k] == fifteenStart)
@@ -754,7 +829,7 @@ public class TrialScript : MonoBehaviour {
                             {
                                 NinetyStart.SetActive(true);
                             }
-                            yield return StartCoroutine(axisChecker());         
+                            //yield return StartCoroutine(axisChecker());         
                             yield return StartCoroutine(waitForTrigger());
                             FifteenStart.SetActive(false);
                             ThirtyStart.SetActive(false);
@@ -767,7 +842,7 @@ public class TrialScript : MonoBehaviour {
 
                             // start return path
                             startTime = Time.time;
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
                             responseTime = Time.time - startTime;
                             CreateText();
@@ -779,7 +854,7 @@ public class TrialScript : MonoBehaviour {
                                 resetPost.SetActive(true);
                                 resetPostWhite.SetActive(true);
                             }
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
                             if (trialCount == 44)
                             {
@@ -878,7 +953,7 @@ public class TrialScript : MonoBehaviour {
                             {
                                 NinetyStart.SetActive(true);
                             }
-                            yield return StartCoroutine(axisChecker());
+                            //yield return StartCoroutine(axisChecker());
                             yield return StartCoroutine(waitForTrigger());
                             FifteenStart.SetActive(false);
                             ThirtyStart.SetActive(false);
@@ -894,7 +969,7 @@ public class TrialScript : MonoBehaviour {
                             tree.SetActive(false);
                             tower.SetActive(false);
                             rock.SetActive(false);
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
                             responseTime = Time.time - startTime;
                             CreateText();
@@ -903,7 +978,7 @@ public class TrialScript : MonoBehaviour {
                                 resetPost.SetActive(true);
                                 resetPostWhite.SetActive(true);
                             }
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
                             if (trialCount == 44)
                             {
@@ -919,7 +994,7 @@ public class TrialScript : MonoBehaviour {
                             tree.SetActive(false);
                             tower.SetActive(false);
                             rock.SetActive(false);
-							yield return StartCoroutine (axisChecker ());               // Have participants count backwards here
+							//yield return StartCoroutine (axisChecker ());               // Have participants count backwards here
 							yield return StartCoroutine (waitForTrigger ());
                             if (countStartArr[k] == fifteenStart)
                             {
@@ -945,7 +1020,7 @@ public class TrialScript : MonoBehaviour {
                             {
                                 NinetyStart.SetActive(true);
                             }
-                            yield return StartCoroutine(axisChecker());
+                            //yield return StartCoroutine(axisChecker());
                             yield return StartCoroutine(waitForTrigger());
                             FifteenStart.SetActive(false);
                             ThirtyStart.SetActive(false);
@@ -954,7 +1029,7 @@ public class TrialScript : MonoBehaviour {
                             SeventyFiveStart.SetActive(false);
                             NinetyStart.SetActive(false);
                             startTime = Time.time;
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
                             responseTime = Time.time - startTime;
                             CreateText();
@@ -965,7 +1040,7 @@ public class TrialScript : MonoBehaviour {
                                 resetPost.SetActive(true);
                                 resetPostWhite.SetActive(true);
                             }
-							yield return StartCoroutine (axisChecker ());
+							//yield return StartCoroutine (axisChecker ());
 							yield return StartCoroutine (waitForTrigger ());
                             if (trialCount == 44)
                             {
@@ -1060,7 +1135,7 @@ public class TrialScript : MonoBehaviour {
                         {
                             NinetyStart.SetActive(true);
                         }
-                        yield return StartCoroutine(axisChecker());
+                        //yield return StartCoroutine(axisChecker());
                         yield return StartCoroutine(waitForTrigger());
                         FifteenStart.SetActive(false);
                         ThirtyStart.SetActive(false);
@@ -1076,7 +1151,7 @@ public class TrialScript : MonoBehaviour {
                         outBoundPost.SetActive(false);
                         // Rotate Landmarks here
                         rotateLandmarks();
-						yield return StartCoroutine (axisChecker ());
+						//yield return StartCoroutine (axisChecker ());
 						yield return StartCoroutine (waitForTrigger ());
                         responseTime = Time.time - startTime;
                         CreateText();
@@ -1090,7 +1165,7 @@ public class TrialScript : MonoBehaviour {
                             resetPost.SetActive(true);
                             resetPostWhite.SetActive(true);
                         }
-						yield return StartCoroutine (axisChecker ());
+						//yield return StartCoroutine (axisChecker ());
 						yield return StartCoroutine (waitForTrigger ());
                         if (trialCount == 44)
                         {
@@ -1109,11 +1184,14 @@ public class TrialScript : MonoBehaviour {
 		playerPos = player.transform.position;
 		pNum = 999;
 		trialCount = 0;
-		if (pNum % 2 == 0) {
-			bothPresentCondition = true;
-		} else {
-			bothPresentCondition = false;
-		}
+
+        // We always enable both present (avoid the video only condition). 
+        bothPresentCondition = true;  
+		//if (pNum % 2 == 0) {
+		//	bothPresentCondition = true; // no video... visual and self motion allowed 
+		//} else {
+		//	bothPresentCondition = false; // video only (or visual only conditions)
+		//}
 
 		// Get post location vectors
 		homePostLoc = homePost.transform.position;
@@ -1180,6 +1258,7 @@ public class TrialScript : MonoBehaviour {
     void Update()
     {
         playerPos = player.transform.position;
-		homePostLoc = homePost.transform.position;
+        outBoundPostLoc = outBoundPost.transform.position;
+        homePostLoc = homePost.transform.position;
     }
 }
